@@ -1,0 +1,7 @@
+fr\waga\persistence\Player.class
+fr\waga\service\PlayerService.class
+fr\waga\persistence\GameEntity.class
+fr\waga\persistence\PlayerRepository.class
+fr\waga\persistence\PlayerEntity.class
+fr\waga\Main.class
+fr\waga\persistence\Game.class
