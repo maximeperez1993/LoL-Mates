@@ -19,10 +19,12 @@ public class Game {
         return gameId;
     }
 
+    @JsonProperty(value="isAlly")
     public boolean isAlly() {
         return isAlly;
     }
 
+    @JsonProperty(value="isWon")
     public boolean isWon() {
         return isWon;
     }

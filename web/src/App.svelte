@@ -10,33 +10,9 @@
 
     const player = "gyiw9173"
     const apiKey = "RGAPI-f7d7f384-e3f3-44f8-8932-d4a732623daf";
-    const maxGame = 1;
+    const maxGame = 2000;
 
-    const fetchSummonerId = (async () => {
-        const response = await fetch(`/api/lol/summoner/v4/summoners/by-name/${player}?api_key=${apiKey}`)
-        return await response.json();
-    })
-
-    const fetchMatches = (async () => {
-        let summonerIdRequest = await fetchSummonerId();
-        let accountId = summonerIdRequest.accountId;
-        const response = await fetch(`/api/lol/match/v4/matchlists/by-account/${accountId}?api_key=${apiKey}`)
-        return await response.json()
-    })
-
-
-    const fetchAllMatches = (async () => {
-        let requests = await fetchMatches();
-        let requestMatches = requests.matches.slice(0, maxGame);
-        const matches = [];
-        for (const request of requestMatches) {
-            console.log(request);
-            const response = await fetch_retry(`/api/lol/match/v4/matches/${request.gameId}?api_key=${apiKey}`)
-            matches.push(await response.json());
-        }
-        console.log(matches);
-        return Promise.resolve(matches);
-    });
+    let playersFromBase;
 
     const getMyTeamId = (participants) => {
         return participants.find(p => player === p.player.summonerName).participantId;
@@ -56,10 +32,30 @@
         return match.teams[1].win === "Win";
     }
 
+    const fetchSummonerId = (async () => {
+        const response = await fetch(`/api/lol/summoner/v4/summoners/by-name/${player}?api_key=${apiKey}`)
+        return await response.json();
+    })
+
+    const fetchMatches = (async () => {
+        let summonerIdRequest = await fetchSummonerId();
+        let accountId = summonerIdRequest.accountId;
+        const response = await fetch(`/api/lol/match/v4/matchlists/by-account/${accountId}?api_key=${apiKey}`)
+        return await response.json()
+    })
+
     const fetchPlayers = (async () => {
-        let matches = await fetchAllMatches();
-        let players = {};
-        for (let match of matches) {
+        let requests = await fetchMatches();
+        let requestMatches = requests.matches.slice(0, maxGame);
+        for (const request of requestMatches) {
+            if (playersFromBase.find(p => p.games.find(g => g.gameId === request.gameId)) != null) {
+                console.log(request.gameId + " already in db");
+                continue;
+            }
+            console.log(request);
+            const response = await fetch_retry(`/api/lol/match/v4/matches/${request.gameId}?api_key=${apiKey}`)
+            const match = await response.json();
+
             let myTeamId = getMyTeamId(match.participantIdentities);
             for (let participant of match.participantIdentities) {
                 let summonerName = participant.player.summonerName;
@@ -69,33 +65,33 @@
                 const matchCopy = JSON.parse(JSON.stringify(match))
                 matchCopy.isAlly = isAlly(myTeamId, participant.participantId);
                 matchCopy.isWon = isWon(myTeamId, match);
-                if (players[summonerName] == null) {
-                    players[participant.player.summonerName] = [matchCopy];
-                } else {
-                    players[participant.player.summonerName].push(matchCopy);
-                }
 
+                await fetch(`/store/player`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: summonerName, games: [matchCopy]})
+                });
             }
         }
-        let allPlayers = Object.keys(players).map(function (name) {
-            return {name: name, games: players[name]};
-        });
-        console.log(allPlayers);
-        await fetch(`/store/players`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(allPlayers)
-        });
+    });
 
+    const loadInfo = () => {
+        fetchPlayers();
+    };
+
+    const viewInfo = (async () => {
         let result = await fetch(`/store/players`);
-        console.log(result);
-        return Promise.resolve(allPlayers);
-    })();
 
+        return playersFromBase = await result.json();
+    })();
 
 </script>
 
-{#await fetchPlayers}
+<button on:click={loadInfo}>
+    Load info
+</button>
+
+{#await viewInfo}
     <p>...waiting </p>
 {:then players}
     <ul>

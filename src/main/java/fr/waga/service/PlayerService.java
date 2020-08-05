@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -22,6 +23,20 @@ public class PlayerService {
     @Autowired
     public PlayerService(PlayerRepository playerRepository) {
         this.playerRepository = playerRepository;
+    }
+
+    @Transactional
+    @Consumes("application/json")
+    @PostMapping(value = "/player", consumes = "application/json")
+    public void players(@RequestBody Player player) {
+        Optional<PlayerEntity> playerEntityOptional = this.playerRepository.findById(player.getName());
+        if (playerEntityOptional.isPresent()) {
+            PlayerEntity playerEntity = playerEntityOptional.get();
+            playerEntity.addGames(player.getGames());
+            this.playerRepository.save(playerEntity);
+        } else {
+            this.playerRepository.save(new PlayerEntity(player));
+        }
     }
 
     @Transactional

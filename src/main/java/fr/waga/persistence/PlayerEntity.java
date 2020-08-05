@@ -39,6 +39,15 @@ public class PlayerEntity {
         return games;
     }
 
+    public void addGames(List<Game> games){
+        for(Game game : games){
+            GameEntity gameEntity = new GameEntity(game);
+            if(!this.games.contains(gameEntity)){
+                this.games.add(gameEntity);
+            }
+        }
+    }
+
     public Player toPlayer(){
         return new Player(this.name, this.games.stream().map(GameEntity::toGame).collect(Collectors.toList()));
     }

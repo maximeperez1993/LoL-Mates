@@ -1,6 +1,7 @@
 package fr.waga.persistence;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 
 @Entity(name = "Game")
@@ -48,5 +49,20 @@ public class GameEntity {
 
     public Game toGame() {
         return new Game(this.gameId, this.isAlly, this.isWon);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GameEntity that = (GameEntity) o;
+        return gameId == that.gameId &&
+                isAlly == that.isAlly &&
+                isWon == that.isWon;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(gameId, isAlly, isWon);
     }
 }
