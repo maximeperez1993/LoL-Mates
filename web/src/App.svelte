@@ -11,7 +11,10 @@
     const player = "gyiw9173"
     const maxGame = 2000;
 
-    let playersFromBase;
+    let playersFromBase = [];
+    let filteredList = [];
+    let searchTerm = "";
+    $: filteredList = playersFromBase.filter(player => player.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const getMyTeamId = (participants) => {
         return participants.find(p => player === p.player.summonerName).participantId;
@@ -86,15 +89,13 @@
 
 </script>
 
-<button on:click={loadInfo}>
-    Load info
-</button>
-
 {#await viewInfo}
     <p>...waiting </p>
 {:then players}
+    Filter: <input bind:value={searchTerm} />
+    {searchTerm}
     <ul>
-        {#each players as player}
+        {#each filteredList as player}
             <li>
                 <a href="https://euw.op.gg/summoner/userName={player.name}" target="_blank">{player.name}</a> :
                 <ul>
@@ -113,3 +114,8 @@
 {:catch error}
     <p>An error occurred!</p>
 {/await}
+
+
+<button on:click={loadInfo}>
+    Refresh info
+</button>
