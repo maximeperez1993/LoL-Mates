@@ -9,7 +9,6 @@
     };
 
     const player = "gyiw9173"
-    const apiKey = "RGAPI-f7d7f384-e3f3-44f8-8932-d4a732623daf";
     const maxGame = 2000;
 
     let playersFromBase;
